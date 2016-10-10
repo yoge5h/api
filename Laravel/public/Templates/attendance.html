@@ -6,8 +6,8 @@
                     <div class="form-group">
                         <label class="control-label col-sm-2 left-align" for="section">Section</label>
                         <div class="col-sm-10">
-                            <select class="form-control" id="section" ng-model="attendance.section" convert-to-number>
-                                <option ng-repeat="section in sections" value={{section.id}}>{{section.name}}</option>
+                            <select class="form-control" id="section" ng-model="attendance.section" ng-change="getSubjectBySection()" convert-to-number>
+                                <option ng-repeat="section in sections | orderBy:'name'" value={{section.id}}>{{section.name}}</option>
                             </select>
                         </div>
                     </div>
@@ -17,7 +17,7 @@
                         <label class="control-label col-sm-2 left-align" for="subject">Subject</label>
                         <div class="col-sm-10">
                             <select class="form-control" id="subject" ng-model="attendance.subject" convert-to-number>
-                                <option ng-repeat="subject in subjects" value={{subject.id}}>{{subject.name}}</option>
+                                <option ng-repeat="subject in subjects  | orderBy:'name'" value={{subject.id}}>{{subject.name}}</option>
                             </select>
                         </div>
                     </div>
@@ -50,7 +50,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="student in students">
+                    <tr ng-repeat="student in students | orderBy:'firstName'">
                         <td>{{student.firstName}}</td>
                         <td>{{student.lastName}}</td>
                         <td>
@@ -63,7 +63,7 @@
     </div>
     <div class="row" ng-if="students.length > 0">
         <div class="col-xs-3 col-sm-2">
-            <button class="btn btn-primary" ng-click="saveAttendance()" style="margin-bottom:10px">Save Attendance</button>
+            <button class="btn btn-primary" ng-click="saveAttendance()" style="margin-bottom:10px;margin-top:10px;">Save Attendance</button>
         </div>
     </div>
 </div>

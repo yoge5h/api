@@ -1,5 +1,5 @@
 ﻿"use strict";
-angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 'ngStorage'])
+angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services"])
 .config(["$stateProvider", "$urlRouterProvider","$httpProvider", function ($stateProvider, $urlRouterProvider,$httpProvider) {
     $stateProvider
         .state('NOTICE', {
@@ -19,7 +19,12 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
                 },
                 'content': {
                     templateUrl: "Templates/notice.html",
-                    controller: "LandingPageController"
+                    controller: "LandingPageController",
+                    resolve: {
+                        sections: ['cacheService', function (cacheService) {
+                            return cacheService.getSections();
+                        }]
+                    }
                 },
                 'footer': {
                     templateUrl: "Templates/footer.html"
@@ -49,7 +54,12 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
             views: {
                 'content@': {
                     templateUrl: "Templates/attendance.html",
-                    controller: "AttendanceController"
+                    controller: "AttendanceController",
+                    resolve: {                       
+                        sections: ['cacheService', function (cacheService) {
+                            return cacheService.getSections();
+                        }],
+                    }
                 }
             }
         })
@@ -58,7 +68,12 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
             views: {
                 'content@': {
                     templateUrl: "Templates/report.html",
-                    controller: "ReportController"
+                    controller: "ReportController",
+                    resolve: {
+                        sections: ['cacheService', function (cacheService) {
+                            return cacheService.getSections();
+                        }]
+                    }
                 }
             }
         })
@@ -82,7 +97,13 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
                                 addSubjectModal: 'Templates/Modal/addSubject.html',
                                 addStudentModal: 'Templates/Modal/addStudent.html'
                             }
-                        }
+                        },
+                        sections: ['cacheService', function (cacheService) {
+                            return cacheService.getSections();
+                        }],
+                        subjects: ['cacheService', function (cacheService) {
+                            return cacheService.getSubjects();
+                        }]                      
                     }
                 }
             }
@@ -99,7 +120,10 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
                                 userModal: "Templates/Modal/addUser.html"
                             }
 
-                        }
+                        },
+                        users: ['cacheService', function (cacheService) {
+                            return cacheService.getUsers();
+                        }]
                     }
                 }
             }
@@ -113,13 +137,14 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
         return {
             'request': function (config) {
                 config.headers = config.headers || {};
-                if ($localStorage.token) {
-                    config.headers.Authorization = 'Bearer ' + $localStorage.token;
-                }
+                var token = $localStorage.get('token', '');
+                if(token !== '')
+                    config.headers.Authorization = 'Bearer ' + token;
                 return config;
             },
             'responseError': function (response) {
                 if (response.status === 401 || response.status === 403) {
+                    $localStorage.store('token', '');
                     $location.path('/login');
                 }
                 return $q.reject(response);
@@ -128,7 +153,21 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
     }]);
 }])
 
-.run(function () {
+.run(["$rootScope", "$localStorage", "$location", function ($rootScope, $localStorage, $location) {
+    $rootScope.$on('$stateChangeStart', function (event, toState, fromState) {
+        $rootScope.isLogin = false;
+        var token = $localStorage.get('token', '');
+        if (token === '') {
+            $location.path("/login");
+            $rootScope.isLogin = true;
+        }
+        else{
+            $location.path(toState.url);
+        }
+    })
+
+
+    //Toaster
     window.Application = window.Application || {};
 
     $(document).on('click', '.navbar-collapse.in', function (e) {
@@ -180,4 +219,4 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services", 
         return toast;
 
     })(jQuery, toastr);
-});
+}]);

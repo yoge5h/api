@@ -1,6 +1,7 @@
 ﻿"use strict";
 angular.module('NOTICE.controllers', ['ui.bootstrap'])
-.controller("HeaderController", ["$scope", "authenticationService", "$location", "template", "$uibModal", function ($scope, authenticationService, $location, template, $uibModal) {
+.controller("HeaderController", ["$scope", "authenticationService", "$location", "template", "$uibModal", "$localStorage"
+    , function ($scope, authenticationService, $location, template, $uibModal, $localStorage) {
     $scope.menuItems = [
         {
             id: "0",
@@ -56,10 +57,8 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     };
 
     $scope.logout = function () {
-        authenticationService.logout(function () {
-            $location.path("/login");
-            // window.location = "/"
-        });
+        $localStorage.store('token', '');
+        $location.path("/login");
     };
 
     $scope.changePassword = function () {
@@ -90,8 +89,7 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         callback(changed);
     }
 }])
-.controller("LandingPageController", ["$scope", "$rootScope", "cacheService", "messageService", function ($scope, $rootScope, cacheService, messageService) {
-    $rootScope.isLogin = false;
+.controller("LandingPageController", ["$scope", "$rootScope", "sections", "messageService", function ($scope, $rootScope, sections, messageService) {
     $scope.message = {
         sendEmail: true
     };
@@ -103,18 +101,17 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     };
     $scope.sendMessage = function () {
         messageService.sendMessage($scope.message, $scope.files).then(function (response) {
-            //debugger;
+            
         })
     };
-    cacheService.getSections(function (sections) {
-        $scope.sections = sections;
-    })
+    
+    $scope.sections = sections;
+    
 }])
-.controller("UserController", ["$scope", "$rootScope", "template", "cacheService", "$uibModal", function ($scope, $rootScope, template, cacheService, $uibModal) {
-    $rootScope.isLogin = false;
+.controller("UserController", ["$scope", "$rootScope", "template", "users", "$uibModal", function ($scope, $rootScope, template, users, $uibModal) {
     $scope.users = {};
     $scope.userHeadings = ["User Name", "First Name", "Last Name", "Action"];
-    $scope.users = cacheService.getUsers();
+    $scope.users = users;
 
     $scope.addUser = function () {
         openModel(template.userModal, 'SaveUserController', {}, 'Add', 'md')
@@ -141,40 +138,47 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         });
     };
 }])
-.controller("LoginController", ["$scope", "$rootScope", "authenticationService", function ($scope, $rootScope, authenticationService) {
-    $rootScope.isLogin = true;
+.controller("LoginController", ["$scope", "$rootScope", "authenticationService", "$localStorage", "$location", function ($scope, $rootScope, authenticationService, $localStorage, $location) {
     $scope.userInfo = {};
     $scope.doLogin = function () {
-        authenticationService.signin($scope.userInfo);
+        authenticationService.signin($scope.userInfo).then(function(response){            
+            $localStorage.store('token', response.data.token);
+            window.location.href = "/";
+        }, function(data){
+            window.Application.toast.show('error', 'Invalid username or password.');
+        });
+        
+       
     };
 }])
 .controller("SettingsController", ["$scope", "$rootScope", function ($scope, $rootScope) {
-    $rootScope.isLogin = false;
     $scope.settings = {};
     $scope.saveSettings = function () {
-        console.log($scope.settings)
+
     };
 }])
-.controller("StudentsController", ["$scope", "$rootScope", "tabs", "templates", "cacheService", "$uibModal", function ($scope, $rootScope, tabs, templates, cacheService, $uibModal) {
-    $rootScope.isLogin = false;
+.controller("StudentsController", ["$scope", "$rootScope", "tabs", "templates", "cacheService", "$uibModal", "sections","subjects"
+    , function ($scope, $rootScope, tabs, templates, cacheService, $uibModal, sections, subjects) {
     $scope.tabs = tabs;
 
     $scope.sectionHeadings = ["Section Name", "Action"];
     $scope.subjectHeadings = ["Subject Code", "Subject Name", "Section", "Action"];
     $scope.studentHeadings = ["First Name", "Last Name", "Email", "Phone", "Action"];
 
-    cacheService.getSections(function (sections) {
-        $scope.sections = sections;
-        if (sections.length > 0) {
-            $scope.selectedStudent = {
-                section: $scope.sections[0].id
-            };
-            $scope.students = cacheService.getStudents($scope.selectedStudent.section);
-        }
-    });
-    $scope.subjects = cacheService.getSubjects();
+   
+    $rootScope.sections = sections;
+    if (sections.length > 0) {
+        $scope.selectedStudent = {
+            section: $scope.sections[0].id
+        };
+        cacheService.getStudents($scope.selectedStudent.section).then(function(response){
+            $scope.students = response.data.students;
+        });;
+    }
+   
+    $rootScope.subjects = subjects;
       
-    $scope.students = cacheService.getStudents($scope.selectedStudent.section);
+    //$scope.students = cacheService.getStudents($scope.selectedStudent.section);
 
     $scope.addSection = function () {
         openModel(templates.addSectionModal, 'SectionController', {}, 'Add','sm')
@@ -200,8 +204,10 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         openModel(templates.addStudentModal, 'StudentController', student, 'Edit', 'md')
     };
 
-    $scope.getStudentsForSection = function () {
-        $scope.students = cacheService.getStudents($scope.selectedStudent.section);
+    $rootScope.getStudentsForSection = function () {
+        cacheService.getStudents($scope.selectedStudent.section).then(function(response){
+            $scope.students = response.data.students;
+        });
     };
 
     function openModel(template,controller,data,mode,size) {
@@ -215,13 +221,16 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
                 },
                 data: function () {
                     return data;
-                }
+                },
+                sections: ['cacheService', function (cacheSercice) {
+                    return cacheSercice.getSections();
+                }]
             }
         });
     };
 }])
-.controller("AttendanceController", ["$scope", "$rootScope", "cacheService", function ($scope, $rootScope, cacheService) {
-    $rootScope.isLogin = false;
+.controller("AttendanceController", ["$scope", "$rootScope", "sections", "cacheService", "attendanceService"
+    , function ($scope, $rootScope, sections, cacheService, attendanceService) {
     $scope.attendance = {
         date: new Date(),
         students:[]
@@ -234,11 +243,19 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     $scope.datePicker = {
         opened: false
     };
-    cacheService.getSections(function (sections) {
-        $scope.sections = sections;
-    });
-    $scope.subjects = cacheService.getSubjects();
-    $scope.getStudents = function () {       
+   
+    $scope.sections = sections; 
+
+    $scope.getSubjectBySection = function(){
+        cacheService.getSubjectBySection($scope.attendance.section).then(function(response){
+            $scope.attendance.subject = undefined;
+            $scope.students = [];
+            $scope.subjects = response.data.subjects;
+        })
+    };
+
+    $scope.getStudents = function () {
+        $scope.students = [];    
         if (typeof $scope.attendance.section == 'undefined') {
             window.Application.toast.show('error', 'Please select a section.');
             return;
@@ -247,47 +264,95 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
             window.Application.toast.show('error', 'Please select a subject.');
             return;
         }
-        //check if attendance already exists for the day the subject.
-        $scope.students = cacheService.getStudents($scope.attendance.section);
-    }
-    $scope.saveAttendance = function () {       
-        angular.forEach($scope.students, function (key, value) {            
+
+        var att = {
+            sectionId : $scope.attendance.section,
+            subjectId : $scope.attendance.subject,
+            date:  $scope.attendance.date
+        }
+
+        attendanceService.isAttedanceMarked(att).then(function(response){
+            if(!response.data.status){
+                window.Application.toast.show('error', 'Attendance for the day and subject already marked.');
+                return;
+            }
+            else{
+                cacheService.getStudents($scope.attendance.section).then(function(response){
+                    $scope.students = response.data.students;
+                });
+            }
+        });
+    };
+    $scope.saveAttendance = function () {
+        $scope.attendance.students = [];
+        angular.forEach($scope.students, function (key, value) {
             var student = {};
-            student.id = key.id
+            student.studentId = key.id
             if (key.isPresent)
                 student.isPresent = key.isPresent;
             else
                 student.isPresent = false;
             $scope.attendance.students.push(student);
         });
-        console.log($scope.attendance);
+        attendanceService.saveAttendance($scope.attendance).then(function(response){
+            $scope.students = [];
+            window.Application.toast.show(response.data.status, response.data.message);
+        });
     }
 }])
-.controller("ReportController", ["$scope", "$rootScope", "cacheService", function ($scope, $rootScope, cacheService) {
-    $rootScope.isLogin = false;
+.controller("ReportController", ["$scope", "$rootScope", "reportService", "sections",'cacheService'
+    , function ($scope, $rootScope, reportService, sections,cacheService) {
     $scope.report = {
-        section:-1,
+        section: -1,
+        reportType:1,
         toDate: new Date(),
         fromDate: new Date(),
         isFromStart: true
     };
    
-    cacheService.getSections(function (sections) {
-        $scope.sections = sections;
-        if (sections.length > 0) {
-            $scope.report.section = $scope.sections[0].id;
-        }
-    });
+   
+    $scope.sections = sections;
+    $scope.ReportTypes = [
+        { 'id': 1, type: 'Section Report' },
+        { 'id': 2, type: 'Student Report' }
+    ];
+    if (sections.length > 0) {
+        $scope.report.section = $scope.sections[0].id;
+    }
+   
     $scope.getAttendanceReport = function () {
+        if (typeof $scope.report.student !== 'object' && $scope.report.reportType === 2) {
+            window.Application.toast.show('error', 'Please enter a student.');
+            return;
+        }
         $scope.allSubjects = [];
-        $scope.reportData = cacheService.getAttendanceReport();
-        if ($scope.reportData.length > 0) {
-            angular.forEach($scope.reportData[0].attendance, function (item, index) {
-                if ($scope.allSubjects.indexOf(item.subject) === -1)
-                $scope.allSubjects.push(item.subject);
-            })
+        if ($scope.report.reportType === 1) {
+            reportService.getAttendanceReport($scope.report, function (reportData) {
+                $scope.reportData = reportData;                
+                if (reportData.length > 0) {
+                    angular.forEach(reportData[0].attendance, function (item, index) {
+                        if ($scope.allSubjects.indexOf(item.subject) === -1)
+                            $scope.allSubjects.push(item.subject);
+                    });
+                };
+            });
+        }
+        else if($scope.report.reportType === 2){
+            reportService.getStudentReport($scope.report).then(function(response){
+                $scope.reportData = response.data;
+            });
+        }
+    };
+
+    $scope.getStudents = function () {
+        $scope.reportData = [];
+        if($scope.report.reportType === 2){
+           cacheService.getStudents($scope.report.section).then(function(response){
+                 $scope.students = response.data.students;
+           });
         };
     };
+
     $scope.datePickerFrom = {
         opened: false
     };
@@ -303,56 +368,109 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     
 
 }])
-.controller("PasswordController", ["$scope",  "$uibModalInstance", function ($scope,  $uibModalInstance) {
+.controller("PasswordController", ["$scope", "$uibModalInstance", "userService", function ($scope, $uibModalInstance, userService) {
     $scope.password = {};
     $scope.close = function () {
         $uibModalInstance.close('ok');
     };
     $scope.changePassword = function () {
-        console.log($scope.password);
+        userService.changePassword($scope.password);
     };
    
 }])
-.controller("SectionController", ["$scope", "mode","data", "$uibModalInstance", function ($scope, mode, data, $uibModalInstance) {
+.controller("SectionController", ["$scope", "mode", "data", "$uibModalInstance", "sectionService",'$rootScope'
+    , function ($scope, mode, data, $uibModalInstance, sectionService,$rootScope) {
     $scope.section = data;
     $scope.close = function () {
         $uibModalInstance.close('ok');
     };
     $scope.mode = mode;
     $scope.saveSection = function () {
-        console.log($scope.section);
+        if (mode === 'Add') {
+            sectionService.addSection($scope.section).then(function(response){
+                $rootScope.sections.push(response.data);
+                window.Application.toast.show('success', 'Section added successfully.');
+                $scope.close();
+            },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            });
+        }
+        else if (mode === 'Edit') {
+            sectionService.amendSection($scope.section).then(function(response){
+                window.Application.toast.show('success', 'Section updated successfully.');
+                $scope.close();
+            },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            });
+        }
     };
 }])
-.controller("SubjectController", ["$scope", "mode", "data", "$uibModalInstance", "cacheService", function ($scope, mode, data, $uibModalInstance, cacheService) {
+.controller("SubjectController", ["$scope", "mode", "data", "$uibModalInstance", "sections", 'subjectService','$rootScope'
+    , function ($scope, mode, data, $uibModalInstance, sections, subjectService,$rootScope) {
     $scope.subject = data;
     $scope.close = function () {
         $uibModalInstance.close('ok');
     };
     $scope.mode = mode;
-    cacheService.getSections(function (sections) {
-        $scope.sections = sections;
-    });
+   
+    $scope.sections = sections;
+    
     $scope.savesubject = function () {
-        console.log($scope.subject);
+        if (mode === 'Add') {
+            subjectService.addSubject($scope.subject).then(function(response){
+                $rootScope.subjects.push(response.data);
+                window.Application.toast.show('success', 'Subject added successfully.');
+                $scope.close();
+            },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            });
+        }
+        else if (mode === 'Edit') {
+            subjectService.amendSubject($scope.subject).then(function(response){
+                $scope.subject.section = $.grep($scope.sections,function(section){return section.id == $scope.subject.sectionId})[0];
+                window.Application.toast.show('success', 'Subject updated successfully.');
+                $scope.close();
+            },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            });
+        }
     };
 
 }])
 
-.controller("StudentController", ["$scope", "mode", "data", "$uibModalInstance", "cacheService", function ($scope, mode, data, $uibModalInstance, cacheService) {
+.controller("StudentController", ["$scope", "mode", "data", "$uibModalInstance", "sections", "studentService","$rootScope"
+    , function ($scope, mode, data, $uibModalInstance, sections, studentService,$rootScope) {
     $scope.student = data;
     $scope.close = function () {
         $uibModalInstance.close('ok');
     };
     $scope.mode = mode;
     
-    $scope.savestudent = function () {
-        console.log($scope.student);
+    $scope.savestudent = function () {        
+        if (mode === 'Add') {
+            studentService.addStudent($scope.student).then(function(response){
+                $rootScope.getStudentsForSection();
+                window.Application.toast.show('success', 'Student added successfully.');
+                $scope.close();
+            },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            });
+        }
+        else if (mode === 'Edit') {
+            studentService.amendStudent($scope.student).then(function(response){
+                $rootScope.getStudentsForSection();
+                window.Application.toast.show('success', 'Subject updated successfully.');
+                $scope.close();
+            },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            });
+        }
     };
-    cacheService.getSections(function (sections) {
-        $scope.sections = sections;
-    });
+   
+    $scope.sections = sections;
+   
 }])
-.controller("SaveUserController", ["$scope", "mode", "data", "$uibModalInstance", function ($scope, mode, data, $uibModalInstance) {
+.controller("SaveUserController", ["$scope", "mode", "data", "$uibModalInstance", "userService", function ($scope, mode, data, $uibModalInstance, userService) {
     $scope.user = data;
     $scope.close = function () {
         $uibModalInstance.close('ok');
@@ -360,11 +478,16 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     $scope.mode = mode;
 
     $scope.saveUser = function () {
-        console.log($scope.user);
+        if (mode === 'Add') {
+            userService.addUser($scope.user);
+        }
+        else if (mode === 'Edit') {
+            userService.amendUser($scope.user);
+        }
     };
 
     $scope.resetPassword = function () {
-        console.log($scope.user);
+        userService.resetPassword();
     };
 }])
 
@@ -384,7 +507,7 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
 
 .directive('setMaxHeight', function () {
     return function (scope, element, attrs) {
-        $(element).css('height', screen.height * .55 + 'px')
+        $(element).css('height', screen.height * .50 + 'px')
                   .css('overflow-y','auto')
     };    
 })
@@ -393,7 +516,6 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         restrict: 'A',
         link: function (scope, elm, attrs) {
             scope.isLoading = function () {
-                console.log('watched')
                 return $http.pendingRequests.length > 0;
             };
 
@@ -407,7 +529,23 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         }
     };
 
-}]);
+}])
 
-
-
+.filter('studentSearchFilter', function () {
+    return function (students, search) {
+        var out = [];
+        if (search != undefined)
+            var searchString = search.toLowerCase();
+        if (!angular.isDefined(searchString) || searchString == '') {
+            return students;
+        }
+        angular.forEach(students, function (student, index) {
+            if ((student.firstName.toLowerCase().indexOf(searchString) != -1)
+                || (student.lastName.toLowerCase().indexOf(searchString) != -1)                
+                || ((student.firstName + ' ' + student.lastName).toLowerCase().indexOf(searchString)) != -1) {
+                out.push(student);
+            }
+        });
+        return out;
+    }
+});

@@ -16,24 +16,23 @@ class SectionController extends Controller
 
     public function index()
 	{
-	    return Section::orderBy('name', 'acc')->get();
+	    return Section::get();
 	}
 
-	public function store(Request $request)
+	public function add(Request $request)
 	{
 	    $section = new Section;
-
 	    $section->name = $request->get('name');
 	   
 	    if($section->save())
 	        //return $this->response->created();
 	        return response()
-        			->json(['message' => 'Section entered successfully.'], 200);
+        			->json(Section::find($section->id));
 	    else
-	        return $this->response->error('could_not_create_section', 500);
+	        return $this->response->error('could not create section', 500);
 	}
 
-	public function show($id)
+	public function get($id)
 	{
 	    $section = Section::find($id);
 
@@ -52,20 +51,21 @@ class SectionController extends Controller
 	    $section->fill($request->all());
 
 	    if($section->save())
-	        return $this->response->noContent();
+	         return response()
+        			->json(['message' => 'Section updated successfully.', 'status' => 200]);
 	    else
 	        return $this->response->error('could not update section', 500);
 	}
 
-	public function destroy($id)
+	public function delete($id)
 	{
 	    $section = Section::find($id);
 
 	    if(!$section)
 	        throw new NotFoundHttpException;
 
-	    if($section->delete())
-	        return $this->response->noContent();
+	    if($section->delete()) return response()
+        			->json(['message' => 'Section deleted successfully.', 'status' => 200]);
 	    else
 	        return $this->response->error('could not delete book', 500);
 	}

@@ -35,8 +35,9 @@
                 <div class="form-group">
                     <label class="control-label col-sm-4 left-align" for="section">Section</label>
                     <div class="col-sm-8">
-                        <select class="form-control" id="section" ng-model="student.section" convert-to-number>
-                            <option ng-repeat="section in sections" value={{section.id}}>{{section.name}}</option>
+                        <select class="form-control" id="section" ng-model="student.sectionId" convert-to-number>
+                            <option ng-repeat="section in sections  | orderBy:'name'" value={{section.id}}>{{section.name}}
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -45,6 +46,6 @@
     </div>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-primary" type="button" ng-click="savestudent()" ng-disabled="((student.firstName == undefined) || (student.lastName == undefined)|| (student.email == undefined) || (student.section == undefined))">Save</button>
+    <button class="btn btn-primary" type="button" ng-click="savestudent()" ng-disabled="((student.firstName == undefined) || (student.lastName == undefined)|| (student.email == undefined) || (student.sectionId == undefined))">Save</button>
     <button class="btn btn-warning" type="button" ng-click="close()">Cancel</button>
 </div>
