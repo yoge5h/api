@@ -63,11 +63,13 @@ class AuthController extends Controller
             return $this->response->error('could_not_create_user', 500);
         }
 
-        if($hasToReleaseToken) {
-            return $this->login($request);
-        }
+        //if($hasToReleaseToken) {
+        //    return $this->login($request);
+        //}
         
-        return $this->response->created();
+        //return $this->response->created();
+        return response()
+                    ->json(User::find($user->id));
     }
 
     public function recovery(Request $request)
@@ -123,5 +125,38 @@ class AuthController extends Controller
             default:
                 return $this->response->error('could_not_reset_password', 500);
         }
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = JWTAuth::parseToken()->authenticate();        
+        $user->password = $request->get('password');
+        if($user->save())
+             return response()
+                    ->json(['message' => 'Password updated successfully.', 'status' => 200]);
+        else
+            return $this->response->error('could not update password', 500);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $user = User::find($request->get('id'));
+        $user->password = $request->get('password');
+        if($user->save())
+             return response()
+                    ->json(['message' => 'Password reset successfully.', 'status' => 200]);
+        else
+            return $this->response->error('could not reset password', 500);
+    }
+
+    public function update(Request $request){
+        $user = User::find($request->get('id'));
+        $user->name = $request->get('name');
+        $user->email = $request->get('email');
+         if($user->save())
+             return response()
+                    ->json(['message' => 'User updated successfully.', 'status' => 200]);
+        else
+            return $this->response->error('could not update user', 500);
     }
 }

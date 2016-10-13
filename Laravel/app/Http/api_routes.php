@@ -5,19 +5,18 @@ $api = app('Dingo\Api\Routing\Router');
 $api->version('v1', function ($api) {
 
 	$api->post('auth/login', 'App\Api\V1\Controllers\AuthController@login');
-	$api->post('auth/signup', 'App\Api\V1\Controllers\AuthController@signup');
-	$api->post('auth/recovery', 'App\Api\V1\Controllers\AuthController@recovery');
-	$api->post('auth/reset', 'App\Api\V1\Controllers\AuthController@reset');
+	
+	//$api->post('auth/recovery', 'App\Api\V1\Controllers\AuthController@recovery');
 
 	// example of protected route
-	$api->get('protected', ['middleware' => ['api.auth'], function () {		
+	$api->get('users', ['middleware' => ['api.auth'], function () {		
 		return \App\User::all();
     }]);
 
 	// example of free route
-	$api->get('free', function() {
-		return \App\User::all();
-	});
+	//$api->get('free', function() {
+	//	return \App\User::all();
+	//});
 
 	$api->group(['middleware' => 'api.auth'], function ($api) {
 		$api->get('section', 'App\Api\V1\Controllers\SectionController@index');
@@ -44,6 +43,13 @@ $api->version('v1', function ($api) {
 		$api->post('attendance','App\Api\V1\Controllers\AttendanceController@attendanceExists');
 		$api->post('attendance/add','App\Api\V1\Controllers\AttendanceController@add');
 		$api->post('attendance/student','App\Api\V1\Controllers\AttendanceController@student');
+		$api->post('attendance/section','App\Api\V1\Controllers\AttendanceController@section');
+
+		$api->post('auth/signup', 'App\Api\V1\Controllers\AuthController@signup');
+		$api->post('auth/changePassword', 'App\Api\V1\Controllers\AuthController@changePassword');
+		$api->post('auth/resetPassword', 'App\Api\V1\Controllers\AuthController@resetPassword');
+		$api->post('auth/update', 'App\Api\V1\Controllers\AuthController@update');;
+
 	});
 
 	$api->get('notice/{id}','App\Api\V1\Controllers\NoticeController@index');

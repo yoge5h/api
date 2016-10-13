@@ -3,6 +3,7 @@
 namespace App\Api\V1\Controllers;
 use JWTAuth;
 use App\Attendance;
+use App\Student;
 use Dingo\Api\Routing\Helpers;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,44 @@ class AttendanceController extends Controller
 
 		 return response()
         			->json($report);
+
+	}
+
+	public function section(Request $request){
+		$sectionId = $request->get('section');		
+		$from = date('Y-m-d', strtotime($request->get('fromDate')));
+		$to = date('Y-m-d', strtotime($request->get('toDate')));
+		$fromStart = $request->get('isFromStart');
+
+		$search  = ['sectionId'=>$sectionId];
+		$response["students"] = Student::where($search)->get(['id']);
+
+		if($fromStart){
+			$response["report"] = DB::select('
+				        SELECT students.id, CONCAT(students.firstName," " ,students.lastName) AS name, subjects.name AS subject, CEILING(SUM(IF(attendances.isPresent = 1,1,0))/SUM(IF(attendances.isPresent IS NOT NULL,1,0)) * 100) AS attendance FROM `sections` 
+						JOIN `subjects` ON sections.id = subjects.sectionId 
+						JOIN `students` ON sections.id = students.sectionId
+						LEFT JOIN `attendances` ON sections.id = attendances.sectionId AND subjects.id = attendances.subjectId AND students.id = attendances.studentId
+						WHERE sections.id = ? AND attendances.date <= ?
+						GROUP BY subjects.id, students.id', 
+				        [$sectionId, $to]
+				     );
+		}
+		else{
+			$response["report"] = DB::select('
+				        SELECT students.id, CONCAT(students.firstName," " ,students.lastName) AS name, subjects.name AS subject, CEILING(SUM(IF(attendances.isPresent = 1,1,0))/SUM(IF(attendances.isPresent IS NOT NULL,1,0)) * 100) AS attendance FROM `sections` 
+						JOIN `subjects` ON sections.id = subjects.sectionId 
+						JOIN `students` ON sections.id = students.sectionId
+						LEFT JOIN `attendances` ON sections.id = attendances.sectionId AND subjects.id = attendances.subjectId AND students.id = attendances.studentId
+						WHERE sections.id = ? AND attendances.date <= ? AND attendances.date >= ?
+						GROUP BY subjects.id, students.id', 
+				        [$sectionId, $to,$from]
+				     );
+		}
+
+		 return response()
+        			->json($response);
+
 
 	}
 }
