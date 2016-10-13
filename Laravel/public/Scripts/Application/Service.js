@@ -99,19 +99,25 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
         }
     };
 }])
-.factory('userService', ['$http', function ($http) {
+.factory('userService', ['$http','urls','$localStorage', function ($http,urls,$localStorage) {
     return {
         addUser: function (user) {
-
+            user.password = 'Nepal@123'
+            var targeturl = urls.base + 'auth/signup';
+            return $http.post(targeturl,user);
         },
         amendUser: function (user) {
-
+            var targeturl = urls.base + 'auth/update';
+            return $http.post(targeturl,user);
         },
-        resetPassword: function () {
-
+        resetPassword: function (userInfo) {
+            userInfo.password = 'Nepal@123';
+            var targeturl = urls.base + 'auth/resetPassword';
+            return $http.post(targeturl,userInfo);
         },
         changePassword: function (passwordInfo) {
-
+            var targeturl = urls.base + 'auth/changePassword';
+            return $http.post(targeturl,passwordInfo);
         }
     }
 }])
@@ -154,31 +160,7 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
         }
     };
 }])
-.factory('reportService', ['$http','urls', function ($http,urls) {
-    var attendancereportSection = [
-            {
-                student: 'Yogesh Adhikari',
-                attendance: [
-                    { subject: "Micro Economics", attendance: 90 },
-                    { subject: "Human Resource Management", attendance: 92 },
-                    { subject: "Business Management", attendance: 88 },
-                    { subject: "Business Statistics", attendance: 82 },
-                    { subject: "Management Accounting", attendance: 88 },
-                    { subject: "Managerial Communication", attendance: 85 },
-                ]
-            },
-            {
-                student: 'Lunish Yakami',
-                attendance: [
-                    { subject: "Micro Economics", attendance: 94 },
-                    { subject: "Human Resource Management", attendance: 82 },
-                    { subject: "Business Management", attendance: 86 },
-                    { subject: "Business Statistics", attendance: 83 },
-                    { subject: "Management Accounting", attendance: 98 },
-                    { subject: "Managerial Communication", attendance: 79 },
-                ]
-            }
-    ];
+.factory('reportService', ['$http','urls', function ($http,urls) {   
     return {
         getAttendanceReport: function (criteria, callback) {
             if(criteria.reportType === 1)
@@ -187,6 +169,10 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
         },
         getStudentReport: function(criteria){
             var targeturl = urls.base + 'attendance/student';     
+            return $http.post(targeturl,criteria);
+        },
+        getSectionReport: function(criteria){
+            var targeturl = urls.base + 'attendance/section';     
             return $http.post(targeturl,criteria);
         }
     }
@@ -219,8 +205,10 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
             return $http.get(targeturl);
         },
         getUsers: function () {
-            
+            var targeturl = urls.base + 'users';
+            return $http.get(targeturl).then(function(response){
+                return response.data.users;
+            });
         }
     };
-}])
-;
+}]);

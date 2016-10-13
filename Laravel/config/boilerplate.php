@@ -41,7 +41,7 @@ return [
     | success message.
     |
     */
-    'signup_token_release' => env('API_SIGNUP_TOKEN_RELEASE', true),
+    'signup_token_release' => env('API_SIGNUP_TOKEN_RELEASE', false),
 
     /*
     |--------------------------------------------------------------------------

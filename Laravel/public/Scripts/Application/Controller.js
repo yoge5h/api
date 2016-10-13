@@ -109,9 +109,8 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     
 }])
 .controller("UserController", ["$scope", "$rootScope", "template", "users", "$uibModal", function ($scope, $rootScope, template, users, $uibModal) {
-    $scope.users = {};
-    $scope.userHeadings = ["User Name", "First Name", "Last Name", "Action"];
-    $scope.users = users;
+    $scope.userHeadings = ["Name", "Email", "Action"];
+    $rootScope.users = users;
 
     $scope.addUser = function () {
         openModel(template.userModal, 'SaveUserController', {}, 'Add', 'md')
@@ -326,11 +325,32 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
             return;
         }
         $scope.allSubjects = [];
-        if ($scope.report.reportType === 1) {
-            reportService.getAttendanceReport($scope.report, function (reportData) {
-                $scope.reportData = reportData;                
-                if (reportData.length > 0) {
-                    angular.forEach(reportData[0].attendance, function (item, index) {
+        $scope.reportData = [];
+        if ($scope.report.reportType === 1) {           
+            reportService.getSectionReport($scope.report).then(function(response){                
+                var attendancereportSection = [];
+                angular.forEach(response.data.students, function (std, index) {
+                    var report = {
+                        student:'',
+                        attendance:[]
+                    };
+                    var studentRecord = $.grep(response.data.report,function(data){
+                        return data.id == std.id;
+                    });
+                    if(studentRecord.length > 0){
+                        report.student = studentRecord[0].name;
+                        angular.forEach(studentRecord, function (rec, index) {
+                            var attendance = {}
+                            attendance.subject = rec.subject;
+                            attendance.attendance = rec.attendance;
+                            report.attendance.push(attendance);
+                        });
+                        attendancereportSection.push(report);
+                    }
+                });
+                $scope.reportData = attendancereportSection;
+                if (attendancereportSection.length > 0) {
+                    angular.forEach(attendancereportSection[0].attendance, function (item, index) {
                         if ($scope.allSubjects.indexOf(item.subject) === -1)
                             $scope.allSubjects.push(item.subject);
                     });
@@ -374,7 +394,19 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         $uibModalInstance.close('ok');
     };
     $scope.changePassword = function () {
-        userService.changePassword($scope.password);
+        userService.changePassword($scope.password).then(function(response){
+           window.Application.toast.show('success', 'Password changed successfully');
+           $scope.close();
+        },function(response){
+            if(typeof response.data.errors != 'undefined'){
+                $.each(response.data.errors,function(index,error){
+                     window.Application.toast.show('error', error);
+                })
+            }
+            else{
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+            }
+        });
     };
    
 }])
@@ -470,7 +502,8 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     $scope.sections = sections;
    
 }])
-.controller("SaveUserController", ["$scope", "mode", "data", "$uibModalInstance", "userService", function ($scope, mode, data, $uibModalInstance, userService) {
+.controller("SaveUserController", ["$scope", "mode", "data", "$uibModalInstance", "userService",'$rootScope'
+    , function ($scope, mode, data, $uibModalInstance, userService,$rootScope) {
     $scope.user = data;
     $scope.close = function () {
         $uibModalInstance.close('ok');
@@ -478,16 +511,30 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     $scope.mode = mode;
 
     $scope.saveUser = function () {
-        if (mode === 'Add') {
-            userService.addUser($scope.user);
+        if (mode === 'Add') {           
+            userService.addUser($scope.user).then(function(response){
+                $rootScope.users.push(response.data);
+                window.Application.toast.show('success', 'User added successfully.');
+                $scope.close();
+            });
         }
         else if (mode === 'Edit') {
-            userService.amendUser($scope.user);
+            userService.amendUser($scope.user).then(function(response){
+            window.Application.toast.show('success', 'User updated successfully.');
+            $scope.close();
+        },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+        });
         }
     };
 
-    $scope.resetPassword = function () {
-        userService.resetPassword();
+    $scope.resetPassword = function() {
+        userService.resetPassword($scope.user).then(function(response){
+            window.Application.toast.show('success', 'Default password set to user ,' + data.name);
+            $scope.close();
+        },function(response){
+                window.Application.toast.show('error', 'An error occured duting the operation.');
+        });
     };
 }])
 
@@ -530,7 +577,6 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     };
 
 }])
-
 .filter('studentSearchFilter', function () {
     return function (students, search) {
         var out = [];

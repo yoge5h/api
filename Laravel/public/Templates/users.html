@@ -14,9 +14,8 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="user in users">
-                        <td>{{user.userName}}</td>
-                        <td>{{user.firstName}}</td>
-                        <td>{{user.lastName}}</td>
+                        <td>{{user.name}}</td>
+                        <td>{{user.email}}</td>
                         <td>
                             <span class="clickable glyphicon glyphicon-edit" uib-tooltip="Edit user." ng-click="editUser(user)"></span>&nbsp;&nbsp;
                             <span class="clickable glyphicon glyphicon-trash" uib-tooltip="Delete user."></span>

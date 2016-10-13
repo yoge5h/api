@@ -14,9 +14,9 @@ $api->version('v1', function ($api) {
     }]);
 
 	// example of free route
-	//$api->get('free', function() {
-	//	return \App\User::all();
-	//});
+	$api->get('free', function() {
+		return \App\User::all();
+	});
 
 	$api->group(['middleware' => 'api.auth'], function ($api) {
 		$api->get('section', 'App\Api\V1\Controllers\SectionController@index');
