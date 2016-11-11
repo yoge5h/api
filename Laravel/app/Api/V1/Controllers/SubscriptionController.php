@@ -17,6 +17,24 @@ class SubscriptionController extends Controller
 	{
 	    $subscription = Subscription::firstOrNew(array('deviceId' => $request->get('deviceId')));
 		$subscription->deviceId = $request->get('deviceId');
-		$subscription->save();
+		$subscription->sectionId = $request->get('sectionId');
+		
+		if($subscription->save())
+	         return response()
+        			->json(['message' => 'Subscription registered successfully.', 'status' => 200]);
+	    else
+	        return $this->response->error('could not register subscription', 500);
+	}
+
+	public function index(Request $request)
+	{
+		$subscription = $request->get('deviceId');
+		$search  = ['deviceId'=>$subscription];
+	    $subscription = Subscription::where($search)->get();
+
+	    if(!$subscription)
+	        throw new NotFoundHttpException; 
+
+	    return $subscription;
 	}
 }

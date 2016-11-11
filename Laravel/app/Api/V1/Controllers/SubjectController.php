@@ -38,6 +38,17 @@ class SubjectController extends Controller
 
 	public function get($id)
 	{
+		$search  = ['sectionId'=>$id,'isActive'=>true];
+	    $subject = Subject::where($search)->with('section')->get();
+
+	    if(!$subject)
+	        throw new NotFoundHttpException; 
+
+	    return $subject;
+	}
+
+	public function getAll($id)
+	{
 		$search  = ['sectionId'=>$id];
 	    $subject = Subject::where($search)->with('section')->get();
 
@@ -73,5 +84,15 @@ class SubjectController extends Controller
         			->json(['message' => 'Subject deleted successfully.', 'status' => 200]);
 	    else
 	        return $this->response->error('could not delete subject', 500);
+	}
+
+	public function changeActiveStatus($id){
+		$subject = Subject::find($id);
+		if(!$subject)
+	        throw new NotFoundHttpException;
+	    $subject->isActive = !$subject->isActive;
+	    if($subject->save())
+	        return response()
+        		->json(['message' => 'Subject updated successfully.', 'status' => 200]);
 	}
 }

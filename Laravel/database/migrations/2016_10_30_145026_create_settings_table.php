@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateAttendanceTable extends Migration
+class CreateSettingsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -12,14 +12,11 @@ class CreateAttendanceTable extends Migration
      */
     public function up()
     {
-        Schema::create('attendances', function (Blueprint $table) {
+        Schema::create('settings', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('sectionId');
-            $table->integer('subjectId');
-            $table->integer('studentId');
-            $table->boolean('isPresent');
-            $table->date('date');
-            $table->integer('addedBy');
+            $table->string('email');
+            $table->string('password');
+            $table->string('cc');
             $table->timestamps();
         });
     }
@@ -31,6 +28,6 @@ class CreateAttendanceTable extends Migration
      */
     public function down()
     {
-        Schema::drop('attendance');
+        Schema::drop('settings');
     }
 }

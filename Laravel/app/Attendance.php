@@ -8,5 +8,5 @@ class Attendance extends Model
 {
     protected $fillable = ['sectionId','subjectId','studentId','date','isPresent'];
 
-    protected $hidden = array('created_at','updated_at');
+    protected $hidden = array('addedBy','created_at','updated_at');
 }

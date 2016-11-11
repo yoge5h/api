@@ -17,6 +17,7 @@ class CreateNoticeTable extends Migration
             $table->string('subject');
             $table->string('message');
             $table->integer('sectionId')->unsigned();  
+            $table->integer('addedBy');
             $table->timestamps();
 
             //$table->foreign('sectionId')->references('id')->on('sections');

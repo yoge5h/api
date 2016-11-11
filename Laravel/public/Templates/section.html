@@ -14,8 +14,7 @@
             <tbody>
                 <tr ng-repeat="section in sections | orderBy:'name'">
                     <td>{{section.name}}</td>
-                    <td><span class="clickable glyphicon glyphicon-edit" uib-tooltip="Edit section." ng-click="editSection(section)"></span>&nbsp;&nbsp;
-                        <span class="clickable glyphicon glyphicon-trash" uib-tooltip="Delete section."></span></td>
+                    <td><span class="clickable glyphicon glyphicon-edit" uib-tooltip="Edit section." ng-click="editSection(section)"></span></td>
                 </tr>
             </tbody>
         </table>    

@@ -68,5 +68,5 @@ class SectionController extends Controller
         			->json(['message' => 'Section deleted successfully.', 'status' => 200]);
 	    else
 	        return $this->response->error('could not delete book', 500);
-	}
+	}	
 }

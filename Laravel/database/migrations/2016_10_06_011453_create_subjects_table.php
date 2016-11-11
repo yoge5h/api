@@ -17,6 +17,7 @@ class CreateSubjectsTable extends Migration
             $table->string('code');
             $table->string('name');
             $table->integer('sectionId')->unsigned();            
+            $table->boolean('isActive');            
             $table->timestamps();
 
             $table->foreign('sectionId')->references('id')->on('sections');

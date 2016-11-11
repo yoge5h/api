@@ -91,7 +91,8 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
 }])
 .controller("LandingPageController", ["$scope", "$rootScope", "sections", "messageService", function ($scope, $rootScope, sections, messageService) {
     $scope.message = {
-        sendEmail: true
+        sendEmail: true,
+        sendToMobile: false
     };
     $scope.files = [];
     $scope.uploadFile = function (files) {
@@ -101,7 +102,7 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     };
     $scope.sendMessage = function () {
         messageService.sendMessage($scope.message, $scope.files).then(function (response) {
-            
+            window.Application.toast.show('success', 'Message sent successfully.');
         })
     };
     
@@ -150,18 +151,25 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
        
     };
 }])
-.controller("SettingsController", ["$scope", "$rootScope", function ($scope, $rootScope) {
+.controller("SettingsController", ["$scope", "cacheService", function ($scope,cacheService) {
     $scope.settings = {};
+    cacheService.getSetting().then(function(response){
+        if(response.data.length != 0){
+            $scope.settings = response.data.settings[0];
+        }
+    })
     $scope.saveSettings = function () {
-
+        cacheService.saveSettings($scope.settings).then(function(response){
+            window.Application.toast.show('success', 'Setting updated successfully.');
+        })
     };
 }])
-.controller("StudentsController", ["$scope", "$rootScope", "tabs", "templates", "cacheService", "$uibModal", "sections","subjects"
-    , function ($scope, $rootScope, tabs, templates, cacheService, $uibModal, sections, subjects) {
+.controller("StudentsController", ["$scope", "$rootScope", "tabs", "templates", "cacheService", "$uibModal", "sections"
+    , function ($scope, $rootScope, tabs, templates, cacheService, $uibModal, sections) {
     $scope.tabs = tabs;
 
     $scope.sectionHeadings = ["Section Name", "Action"];
-    $scope.subjectHeadings = ["Subject Code", "Subject Name", "Section", "Action"];
+    $scope.subjectHeadings = ["Subject Code", "Subject Name", "Section","isActive", "Action"];
     $scope.studentHeadings = ["First Name", "Last Name", "Email", "Phone", "Action"];
 
    
@@ -170,15 +178,25 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         $scope.selectedStudent = {
             section: $scope.sections[0].id
         };
+        $scope.selectedSubject = {
+            section: $scope.sections[0].id
+        };
         cacheService.getStudents($scope.selectedStudent.section).then(function(response){
             $scope.students = response.data.students;
-        });;
+        });
+        cacheService.getAllSubjectBySection($scope.selectedSubject.section).then(function(response){
+            $rootScope.subjects = response.data.subjects;
+        });
     }
    
-    $rootScope.subjects = subjects;
-      
-    //$scope.students = cacheService.getStudents($scope.selectedStudent.section);
-
+    //$rootScope.subjects = subjects;
+    $scope.changeActiveStatus = function(id){
+        cacheService.changeActiveStatus(id).then(function(response){
+            window.Application.toast.show('success', 'Status changed successfully.');
+            $scope.getSubjectsForSection();
+        });
+    };
+    
     $scope.addSection = function () {
         openModel(templates.addSectionModal, 'SectionController', {}, 'Add','sm')
     };
@@ -206,6 +224,12 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
     $rootScope.getStudentsForSection = function () {
         cacheService.getStudents($scope.selectedStudent.section).then(function(response){
             $scope.students = response.data.students;
+        });
+    };
+
+    $scope.getSubjectsForSection = function () {
+        cacheService.getSubjectBySection($scope.selectedSubject.section).then(function(response){
+            $rootScope.subjects = response.data.subjects;
         });
     };
 
@@ -530,7 +554,7 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
 
     $scope.resetPassword = function() {
         userService.resetPassword($scope.user).then(function(response){
-            window.Application.toast.show('success', 'Default password set to user ,' + data.name);
+            window.Application.toast.show('success', 'Default password set for ' + data.name);
             $scope.close();
         },function(response){
                 window.Application.toast.show('error', 'An error occured duting the operation.');

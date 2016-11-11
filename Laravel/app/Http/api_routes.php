@@ -14,12 +14,12 @@ $api->version('v1', function ($api) {
     }]);
 
 	// example of free route
-	$api->get('free', function() {
-		return \App\User::all();
-	});
+	//$api->get('free', function() {
+	//	return \App\User::all();
+	//});
 
 	$api->group(['middleware' => 'api.auth'], function ($api) {
-		$api->get('section', 'App\Api\V1\Controllers\SectionController@index');
+		
 		$api->post('section/add', 'App\Api\V1\Controllers\SectionController@add');
 		$api->get('section/{id}', 'App\Api\V1\Controllers\SectionController@get');
 		$api->post('section/{id}', 'App\Api\V1\Controllers\SectionController@update');
@@ -31,6 +31,8 @@ $api->version('v1', function ($api) {
 		$api->get('subject/{id}', 'App\Api\V1\Controllers\SubjectController@get');
 		$api->post('subject/{id}', 'App\Api\V1\Controllers\SubjectController@update');
 		$api->delete('subject/{id}', 'App\Api\V1\Controllers\SubjectController@delete');
+		$api->get('subject/changeActiveStatus/{id}','App\Api\V1\Controllers\SubjectController@changeActiveStatus');
+		$api->get('allSubjects/{id}', 'App\Api\V1\Controllers\SubjectController@getAll');
 
 		$api->get('student', 'App\Api\V1\Controllers\StudentController@index');
 		$api->post('student/add', 'App\Api\V1\Controllers\StudentController@add');
@@ -48,10 +50,15 @@ $api->version('v1', function ($api) {
 		$api->post('auth/signup', 'App\Api\V1\Controllers\AuthController@signup');
 		$api->post('auth/changePassword', 'App\Api\V1\Controllers\AuthController@changePassword');
 		$api->post('auth/resetPassword', 'App\Api\V1\Controllers\AuthController@resetPassword');
-		$api->post('auth/update', 'App\Api\V1\Controllers\AuthController@update');;
+		$api->post('auth/update', 'App\Api\V1\Controllers\AuthController@update');
+
+		$api->get('setting', 'App\Api\V1\Controllers\SettingController@index');
+		$api->post('setting', 'App\Api\V1\Controllers\SettingController@update');
 
 	});
 
 	$api->get('notice/{id}','App\Api\V1\Controllers\NoticeController@index');
-
+	$api->get('section', 'App\Api\V1\Controllers\SectionController@index');
+	$api->post('subscription', 'App\Api\V1\Controllers\SubscriptionController@save');
+	$api->post('currentSubscription', 'App\Api\V1\Controllers\SubscriptionController@index');
 });

@@ -21,7 +21,7 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services"])
                     templateUrl: "Templates/notice.html",
                     controller: "LandingPageController",
                     resolve: {
-                        sections: ['cacheService', function (cacheService) {
+                        sections: ['cacheService','$localStorage', function (cacheService,$localStorage) {
                             return cacheService.getSections();
                         }]
                     }
@@ -100,10 +100,10 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services"])
                         },
                         sections: ['cacheService', function (cacheService) {
                             return cacheService.getSections();
-                        }],
-                        subjects: ['cacheService', function (cacheService) {
-                            return cacheService.getSubjects();
-                        }]                      
+                        }]//,
+                        //subjects: ['cacheService', function (cacheService) {
+                        //    return cacheService.getSubjects();
+                        //}]                      
                     }
                 }
             }
@@ -162,7 +162,11 @@ angular.module("NOTICE", ["ui.router", "NOTICE.controllers", "NOTICE.services"])
             $rootScope.isLogin = true;
         }
         else{
-            $location.path(toState.url);
+            if(toState.url == 'login'){
+                 $location.path('/');
+            }
+            else
+                $location.path(toState.url);
         }
     })
 

@@ -94,7 +94,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="report in reportData">
+                    <tr ng-repeat="report in reportData | orderBy: 'date'">
                         <td>{{report.date}}</td>
                         <td>{{report.subject}}</td>
                         <td ng-class="{'redBackground' : !report.isPresent, 'greenBackground': report.isPresent}"></td>

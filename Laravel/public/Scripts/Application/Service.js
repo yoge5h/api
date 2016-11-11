@@ -1,7 +1,7 @@
 ﻿"use strict";
 angular.module('NOTICE.services', ['ngResource','ngStorage'])
 .constant('urls', {
-    base: 'http://localhost:8000/api/'
+    base: 'http://192.168.1.78:8000/api/'
 })
 .factory('authenticationService', ['$http', '$localStorage', 'urls', function ($http, $localStorage, urls) {
     function urlBase64Decode(str) {
@@ -48,26 +48,26 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
     };
 }])
 
-.factory("messageService", ["$http", function ($http) {
+.factory("messageService", ["$http",'urls', function ($http,urls) {
     return {
         sendMessage: function (message, files) {
-            var targetUrl = "/Home/Message";
-            return $http({
-                url: targetUrl,
-                method: "POST",
-                headers: { "Content-Type": undefined },
-                transformRequest: function (data) {
-                    var formData = new FormData();
-                    formData.append("messageRequest", angular.toJson(data.messageRequest));
-                    angular.forEach(data.filesRequest, function (file) {
-                        formData.append("filesRequest", file);
-                    })
-
-                    return formData;
-
-                },
-                data: { messageRequest: message, filesRequest: files }
-            })
+            var targeturl = urls.base + 'notice/send';
+            var noOfFiles = files.length;
+            var formData = new FormData();
+            formData.append("to", message.to);
+            formData.append("subject", message.subject);  
+            formData.append("message", message.message); 
+            formData.append("sendEmail", message.sendEmail);
+            formData.append("sendToMobile", message.sendToMobile)
+            for (var i=0; i < noOfFiles; i++) {
+              formData.append("file_" + i, files[i]); 
+            };
+            formData.append("noOfFiles",noOfFiles);
+            return $http.post(targeturl,formData,{
+                  withCredentials: true,
+                  headers: {'Content-Type': undefined },
+                  transformRequest: angular.identity
+              })
         }
     };
 }])
@@ -187,6 +187,8 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
             return $http.get(targeturl).then(function(response){
                 var sections = response.data.sections;
                 return sections;
+            },function(response){
+                return [];
             });
         },
         getSubjects: function () {
@@ -204,11 +206,27 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
             var targeturl = urls.base + 'subject/' + id;
             return $http.get(targeturl);
         },
+        getAllSubjectBySection: function(id){
+            var targeturl = urls.base + 'allSubjects/' + id;
+            return $http.get(targeturl);
+        },
         getUsers: function () {
             var targeturl = urls.base + 'users';
             return $http.get(targeturl).then(function(response){
                 return response.data.users;
             });
+        },
+        changeActiveStatus: function(id){
+            var targeturl = urls.base + 'subject/changeActiveStatus/' + id;
+            return $http.get(targeturl);
+        },
+        getSetting: function(){
+            var targeturl = urls.base + 'setting';
+            return $http.get(targeturl);
+        },
+        saveSettings: function(setting){
+            var targeturl = urls.base + 'setting';
+            return $http.post(targeturl,setting);
         }
     };
 }]);
