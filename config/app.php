@@ -2,7 +2,7 @@
 
 return [
 
-    'SECRET_API_KEY' => env('',''),
+    'SECRET_API_KEY' => env('','AIzaSyCTZqGtDp5Qvfp1kIX7m7eBBoxi7rvC_ao'),
     /*
     |--------------------------------------------------------------------------
     | Application Environment

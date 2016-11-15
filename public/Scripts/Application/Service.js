@@ -1,7 +1,7 @@
-﻿"use strict";
+"use strict";
 angular.module('NOTICE.services', ['ngResource','ngStorage'])
 .constant('urls', {
-    base: 'http://192.168.1.78:8000/api/'
+    base: 'https://notify-yogesh89.c9users.io/api/'
 })
 .factory('authenticationService', ['$http', '$localStorage', 'urls', function ($http, $localStorage, urls) {
     function urlBase64Decode(str) {
@@ -52,7 +52,7 @@ angular.module('NOTICE.services', ['ngResource','ngStorage'])
     return {
         sendMessage: function (message, files) {
             var targeturl = urls.base + 'notice/send';
-            var noOfFiles = files.length;
+            var noOfFiles = typeof files === 'undefined' ? 0 : files.length;
             var formData = new FormData();
             formData.append("to", message.to);
             formData.append("subject", message.subject);  

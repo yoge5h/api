@@ -74,6 +74,13 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         if (!isChanged)
             $scope.menuItems[0].active = 'active';
     });
+    
+    $scope.activeOnHome = function(){
+        angular.forEach($scope.menuItems, function (key, value) {
+            key.active = "";
+        });
+        $scope.menuItems[0].active = 'active';
+    };
 
     function initActive(callback) {
         var changed = false;
@@ -94,8 +101,9 @@ angular.module('NOTICE.controllers', ['ui.bootstrap'])
         sendEmail: true,
         sendToMobile: false
     };
-    $scope.files = [];
+   
     $scope.uploadFile = function (files) {
+        $scope.files = [];
         angular.forEach(files, function (file) {
             $scope.files.push(file);
         })

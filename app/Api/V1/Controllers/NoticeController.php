@@ -9,7 +9,8 @@ use App\Setting;
 use Dingo\Api\Routing\Helpers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use Mail;
+use stdClass;
 use App\Http\Requests;
 
 class NoticeController extends Controller
@@ -28,7 +29,7 @@ class NoticeController extends Controller
 		$noOfFiles = intval($request["noOfFiles"]);
 		$section = $request["to"];
 		$subject = $request["subject"];
-		$message = $request["message"];
+		$messageContent = $request["message"];
 		$isEmail = $request["sendEmail"];
 		$isMobile = $request["sendToMobile"];
 
@@ -43,9 +44,9 @@ class NoticeController extends Controller
 			//email part
 			$search  = ['sectionId'=>$section];
 			$toEmails = Student::where($search)->get(['email']);
-			$mailingListTo = '';
+			$mailingListTo = array();
 			foreach ($toEmails as $email) {
-				$mailingListTo = $mailingListTo.$email->email.';';
+				array_push($mailingListTo ,$email->email);
 			}
 
 			$setting = Setting::get(['email','cc']);
@@ -53,7 +54,28 @@ class NoticeController extends Controller
 			$mailingListFrom = $setting[0]->email;
 			$mailingListCC = $setting[0]->cc;
 
-			//dd($mailingListCC);
+
+			$mailDetails = new stdClass();
+			$mailDetails->subject = $subject;
+			$mailDetails->mailingListCC = $mailingListCC;
+			$mailDetails->messageContent = $messageContent;
+			$mailDetails->toEmails = $mailingListTo;
+			$mailDetails->mailingListFrom = $mailingListFrom;
+			$mailDetails->files = $myFiles;
+		
+			Mail::raw($mailDetails->messageContent, function($message) use($mailDetails) {
+			    $message
+			        ->subject($mailDetails->subject)
+			        ->to($mailDetails->toEmails)
+			        ->cc(explode(";", $mailDetails->mailingListCC))
+			        ->from($mailDetails->mailingListFrom);
+			
+			    if (count($mailDetails->files) > 0) {
+			    	foreach($mailDetails->files as $file){
+			        	$message->attach($file, array('as'=>$file->getClientOriginalName()));
+			    	}
+			    }
+			});
 		}
 
 		if($isMobile == 'true')
@@ -70,7 +92,7 @@ class NoticeController extends Controller
 
 			$msg = array
 			(
-				'message' 	=> $message,
+				'message' 	=> $messageContent,
 				'title'		=> $subject
 			);
 
@@ -94,7 +116,6 @@ class NoticeController extends Controller
 			curl_setopt( $ch,CURLOPT_SSL_VERIFYPEER, false );
 			curl_setopt( $ch,CURLOPT_POSTFIELDS, json_encode( $fields ) );
 			$result = curl_exec($ch );
-			dd($result);
 			curl_close( $ch );
 		}
 		
@@ -107,7 +128,7 @@ class NoticeController extends Controller
 	    $notice = new Notice;
 	    $notice->addedBy = $user->id;
 	    $notice->subject = $request->get('subject');
-	    $notice->message = $request->get('message');
+	    $notice->message = $messageContent;
 	    
 	   
 	    if($notice->save())
